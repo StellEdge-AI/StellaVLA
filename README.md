@@ -13,7 +13,7 @@
   <a href="https://huggingface.co/StellarEdge/StellaVLA">
     <img alt="Models and Data" src="https://img.shields.io/badge/HF-Models%20%26%20Data-yellow?logo=huggingface">
   </a>
-  <a href="https://hub.docker.com/r/stellaredge/stellavla">
+  <a href="https://hub.docker.com/r/siyuhsu/stellavla">
     <img alt="Docker" src="https://img.shields.io/badge/Docker-Image-2496ED?logo=docker&logoColor=white">
   </a>
   <a href="https://vla-arena.github.io/#leaderboard">
@@ -52,13 +52,13 @@ The image ships all three simulators and the policy server, and is the quickest 
 reproduce the reported results.
 
 ```bash
-docker pull stellaredge/stellavla:eval
+docker pull siyuhsu/stellavla:eval
 
 mkdir -p data
-docker run --rm --gpus all -v $PWD/data:/data stellaredge/stellavla:eval fetch-assets
-docker run --rm --gpus all -v $PWD/data:/data stellaredge/stellavla:eval verify
+docker run --rm --gpus all -v $PWD/data:/data siyuhsu/stellavla:eval fetch-assets
+docker run --rm --gpus all -v $PWD/data:/data siyuhsu/stellavla:eval verify
 
-DOCKER="docker run --rm --gpus all --shm-size=16g -v $PWD/data:/data stellaredge/stellavla:eval"
+DOCKER="docker run --rm --gpus all --shm-size=16g -v $PWD/data:/data siyuhsu/stellavla:eval"
 $DOCKER libero        # 4 suites × 10 tasks × 50 trials
 $DOCKER libero-plus   # 9,430 perturbed episodes
 $DOCKER vla-arena     # 11 suites × 3 levels
