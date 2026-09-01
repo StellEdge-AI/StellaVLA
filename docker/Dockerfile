@@ -11,13 +11,13 @@
 #   /app/VLA-Arena/envs/base/.venv  3.11  VLA-Arena     robosuite 1.5.1
 #
 # Weights and demo packs are NOT baked in (~19.6 GB). Mount them at /data, or
-# run `docker run ... stellavla-eval fetch-assets` once to download them.
+# run `docker run ... stellavla fetch-assets` once to download them.
 
 ARG BASE_IMAGE=nvidia/cuda:12.1.1-base-ubuntu22.04
 FROM ${BASE_IMAGE}
 
 LABEL org.opencontainers.image.title="StellaVLA evaluation" \
-      org.opencontainers.image.source="https://github.com/siyuhsu/StellaVLA-Eval"
+      org.opencontainers.image.source="https://github.com/StellEdge-AI/StellaVLA"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \

@@ -18,7 +18,7 @@ scenes: LIBERO `8f1084e`, LIBERO-Plus `4976dc3`, VLA-Arena `2ddcb00`.
 ## Build
 
 ```bash
-docker build -f docker/Dockerfile -t stellavla-eval .
+docker build -f docker/Dockerfile -t stellavla .
 ```
 
 Useful build arguments:
@@ -38,7 +38,7 @@ host directory and mount it at `/data`:
 
 ```bash
 mkdir -p $PWD/data
-docker run --rm --gpus all -v $PWD/data:/data stellavla-eval fetch-assets
+docker run --rm --gpus all -v $PWD/data:/data stellavla fetch-assets
 ```
 
 That leaves `/data/checkpoints/{libero,vla-arena}/`,
@@ -47,7 +47,7 @@ That leaves `/data/checkpoints/{libero,vla-arena}/`,
 ## Run
 
 ```bash
-DOCKER="docker run --rm --gpus all --shm-size=16g -v $PWD/data:/data stellavla-eval"
+DOCKER="docker run --rm --gpus all --shm-size=16g -v $PWD/data:/data stellavla"
 
 $DOCKER libero                     # 4 suites x 10 tasks x 50 trials
 $DOCKER libero-plus                # 9,430 episodes
