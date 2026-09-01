@@ -79,7 +79,7 @@ pip install -r requirements.txt && pip install -e .
 
 Install each simulator from its own repository, at the commit the results were measured
 on: [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO/tree/8f1084e3132a39270c3a13ebe37270a43ece2a01),
-[LIBERO-Plus](https://github.com/sylvestf/LIBERO-Plus/tree/4976dc30028e805ff8094b55501d532c48fec182),
+[LIBERO-Plus](https://github.com/sylvestf/LIBERO-plus/tree/4976dc30028e805ff8094b55501d532c48fec182),
 [VLA-Arena](https://github.com/PKU-Alignment/VLA-Arena/tree/2ddcb003ca17bb850079acdb34fe0281140bd1df).
 [`docker/Dockerfile`](docker/Dockerfile) is the authoritative record of the pinned
 versions and of the patches each simulator needs, and
