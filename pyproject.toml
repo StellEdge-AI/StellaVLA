@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stellavla-eval"
+version = "1.0.0"
+description = "Evaluation code for StellaVLA on LIBERO, LIBERO-plus and VLA-Arena"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "StellEdge AI" }]
+
+[project.urls]
+Paper = "https://arxiv.org/abs/2608.11671"
+Blog = "https://www.stelledge.com/blog/stellavla"
+Weights = "https://huggingface.co/StellarEdge/StellaVLA"
+
+[tool.setuptools.packages.find]
+include = ["stellavla*", "deployment*"]

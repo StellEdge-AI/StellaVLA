@@ -1,0 +1,21 @@
+# envs/base/pyproject.toml for VLA-Arena.
+#
+# The repository commits envs/base/uv.lock but not the pyproject.toml beside
+# it, so a clean checkout cannot resolve that environment. This manifest matches
+# what the committed lock records for the root project: a single dependency on
+# the simulator package. (The lock has no tyro/websockets/omegaconf/msgpack, so
+# the copy floating around with those listed did not produce it.)
+#
+# The client-side packages the evaluation needs on top (websockets, msgpack,
+# tyro, omegaconf) are installed separately in the Dockerfile rather than added
+# here, so this file stays a faithful copy of what the lock describes.
+[project]
+name = "vla-arena-env-base"
+version = "0.0.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "vla-arena",
+]
+
+[tool.uv.sources]
+vla-arena = { path = "../..", editable = true }

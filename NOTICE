@@ -1,0 +1,15 @@
+StellaVLA-Eval
+Copyright (c) StellEdge AI.
+
+This project is derived from StarVLA (https://github.com/starVLA/starVLA),
+released by the StarVLA Team under the MIT License, whose terms are retained in
+LICENSE-MIT. This distribution is licensed under Apache-2.0; see LICENSE.
+
+Third-party components carried over from that lineage:
+
+  * stellavla/model/modules/action_model/MLP_ActionHeader.py
+      Action head following the OpenVLA-OFT recipe
+      (https://github.com/moojink/openvla-oft).
+
+  * The Qwen3-VL backbone is used under its own license
+      (https://huggingface.co/Qwen).

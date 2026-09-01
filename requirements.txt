@@ -1,0 +1,19 @@
+# Policy-server environment. Each simulator runs in its own env — see the
+# per-benchmark sections of README.md.
+torch==2.6.0
+torchvision==0.21.0
+transformers==4.57.0
+accelerate==1.5.2
+diffusers==0.37.1
+qwen-vl-utils==0.0.14
+safetensors==0.8.0
+huggingface-hub==0.36.2
+numpy==2.2.6
+pillow==11.3.0
+omegaconf
+rich
+websockets==16.0
+websocket-client==1.8.0
+msgpack==1.1.2
+typing_extensions
+# flash-attn is optional: QWen3.py probes for it and falls back to sdpa.

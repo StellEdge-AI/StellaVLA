@@ -1,0 +1,9 @@
+# Extra packages for the LIBERO-plus simulator env (on top of the LIBERO-plus
+# repo's own install). The policy server lives in a separate env.
+imageio
+imageio-ffmpeg
+opencv-python
+tqdm
+tyro
+websocket-client==1.8.0
+msgpack

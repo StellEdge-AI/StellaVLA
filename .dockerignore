@@ -1,0 +1,10 @@
+.git
+**/__pycache__
+**/*.pyc
+playground/
+results/
+third_party/
+data/
+*.tar
+*.pt
+*.mp4

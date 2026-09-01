@@ -1,0 +1,47 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*.so
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Runtime artifacts
+results/
+playground/
+third_party/
+checkpoints/
+ckpts/
+data/
+cache/
+tmp/
+wandb/
+nohup.out
+*.log
+*.out
+
+# Media / large files
+*.mp4
+*.tar
+*.pt
+*.safetensors
+
+# Secrets — never commit
+.env
+.hf_token
+.wandb_api_key
+.*_token
+.*api_key
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+.claude/
