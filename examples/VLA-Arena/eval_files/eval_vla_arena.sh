@@ -30,6 +30,7 @@ port=10090
 
 DEFAULT_NUM_TRIALS=10
 DEFAULT_SEED=7
+DEFAULT_RESIZE=256
 save_video_mode=first_success_failure   # all | first_success_failure | none
 
 RUN_DATE=$(date +"%Y%m%d")
@@ -47,7 +48,7 @@ camera_offset=false
 apply_safety_constraint=false
 
 # Initial state selection
-init_state_offset_random=true
+init_state_offset_random=false
 
 # Default task suites (comment/uncomment as needed)
 TASK_SUITES=(
@@ -110,6 +111,7 @@ EOF
 # --- Argument Parsing ---
 NUM_TRIALS="$DEFAULT_NUM_TRIALS"
 SEED="$DEFAULT_SEED"
+RESIZE="$DEFAULT_RESIZE"
 OUTPUT_DIR="$RESULTS_DIR"
 SKIP_EXISTING=false
 DRY_RUN=false
@@ -226,6 +228,7 @@ run_evaluation() {
         --args.task-level "${level}"
         --args.num-trials-per-task "${NUM_TRIALS}"
         --args.seed "${SEED}"
+        --args.resize-size "${RESIZE}" "${RESIZE}"
         --args.video-out-path "${video_out_path}"
         --args.save-video-mode "${save_video_mode}"
     )

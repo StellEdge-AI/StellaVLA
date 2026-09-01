@@ -8,7 +8,7 @@
 #   /opt/conda/envs/stellavla    3.10  policy server (CUDA torch)
 #   /opt/conda/envs/libero       3.10  LIBERO           robosuite 1.4.1
 #   /opt/conda/envs/libero_plus  3.10  LIBERO-plus      robosuite 1.4.0 + assets
-#   /app/VLA-Arena/envs/base/.venv  3.11  VLA-Arena     robosuite 1.5.1
+#   /app/VLA-Arena/envs/base/.venv  3.11  VLA-Arena     robosuite 1.5.2
 #
 # Weights and demo packs are NOT baked in (~19.6 GB). Mount them at /data, or
 # run `docker run ... stellavla fetch-assets` once to download them.
@@ -204,6 +204,8 @@ RUN cd /app/VLA-Arena/envs/base \
        uv sync --frozen --python /opt/conda/envs/py311/bin/python \
     && uv pip install --python ./.venv/bin/python \
        websockets==16.0 msgpack==1.1.2 tyro omegaconf websocket-client==1.8.0 \
+    && uv pip install --python ./.venv/bin/python \
+       robosuite==1.5.2 mujoco==3.9.0 \
     && rm -rf ~/.cache/uv
 
 # ── LIBERO path configs ──────────────────────────────────────────────────────

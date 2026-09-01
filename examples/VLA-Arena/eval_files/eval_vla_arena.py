@@ -152,7 +152,7 @@ def _get_vla_arena_env(task, resolution: int, add_noise: bool, adjust_light: boo
 class Args:
     host: str = "127.0.0.1"
     port: int = 10093
-    resize_size: list = dataclasses.field(default_factory=lambda: [224, 224])
+    resize_size: list = dataclasses.field(default_factory=lambda: [256, 256])
 
     # -----------------------------------------------------------------------
     # VLA-Arena environment parameters
