@@ -46,6 +46,27 @@ case "$cmd" in
     echo "Qwen3-VL backbone:"
     "/opt/conda/envs/stellavla/bin/hf" download Qwen/Qwen3-VL-4B-Instruct \
         --local-dir "$DATA_DIR/Qwen3-VL-4B-Instruct"
+    # `hf download` can leave a partial tree behind without failing, and the
+    # gap then surfaces much later as the policy server refusing to load.
+    # Check the files the three benchmarks actually open.
+    missing=0
+    for f in "$CKPT_DIR/libero/checkpoints/steps_30000_pytorch_model.pt" \
+             "$CKPT_DIR/vla-arena/checkpoints/steps_30000_pytorch_model.pt" \
+             "$CKPT_DIR/libero/config.yaml" \
+             "$CKPT_DIR/vla-arena/config.yaml" \
+             "$PACK_DIR/libero/manifest.json" \
+             "$PACK_DIR/vla-arena/manifest.json"; do
+      [ -s "$f" ] || { echo "missing or empty: $f" >&2; missing=1; }
+    done
+    shards=$(ls "$DATA_DIR/Qwen3-VL-4B-Instruct"/*.safetensors 2>/dev/null | wc -l)
+    if [ "$shards" -lt 2 ]; then
+      echo "missing backbone weights: found $shards .safetensors, expected 2" >&2
+      missing=1
+    fi
+    if [ "$missing" -ne 0 ]; then
+      echo "fetch-assets did not complete; re-run it before evaluating" >&2
+      exit 1
+    fi
     echo "assets ready under $DATA_DIR"
     ;;
 
