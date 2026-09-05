@@ -100,6 +100,9 @@ case "$cmd" in
       trap 'kill $srv 2>/dev/null' EXIT INT TERM
       echo "[arena] server on :$port, waiting ${SERVER_LOAD_WAIT:-420}s for the VLM to load"
       sleep "${SERVER_LOAD_WAIT:-420}"
+        # The simulator renders through EGL, which ignores the server's
+        # CUDA_VISIBLE_DEVICES and would otherwise put every client on GPU 0.
+        export MUJOCO_EGL_DEVICE_ID="$gpu"
       exec bash examples/VLA-Arena/eval_files/eval_vla_arena.sh \
         -c "$CKPT" --port "$port" --suites "$ARENA_SUITES" "$@"
     fi

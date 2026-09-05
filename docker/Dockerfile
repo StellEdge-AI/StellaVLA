@@ -6,7 +6,7 @@
 # picks the right pair for each benchmark:
 #
 #   /opt/conda/envs/stellavla    3.10  policy server (CUDA torch)
-#   /opt/conda/envs/libero       3.10  LIBERO           robosuite 1.4.1
+#   /opt/conda/envs/libero       3.10  LIBERO           robosuite 1.4.0
 #   /opt/conda/envs/libero_plus  3.10  LIBERO-plus      robosuite 1.4.0 + assets
 #   /app/VLA-Arena/envs/base/.venv  3.11  VLA-Arena     robosuite 1.5.2
 #
@@ -156,7 +156,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     /opt/conda/envs/libero/bin/pip install \
         --extra-index-url ${TORCH_INDEX_URL}/cpu torch==2.11.0+cpu \
     && /opt/conda/envs/libero/bin/pip install \
-        numpy==1.24.4 mujoco==3.2.3 robosuite==1.4.1 bddl==1.0.1 gym==0.25.2 \
+        numpy==1.24.4 mujoco==3.2.3 robosuite==1.4.0 bddl==1.0.1 gym==0.25.2 \
         robomimic==0.3.0 opencv-python==4.11.0.86 imageio==2.37.3 imageio-ffmpeg \
         h5py==3.16.0 easydict==1.13 hydra-core==1.3.2 tyro==1.0.13 \
         matplotlib scipy pyyaml termcolor future cloudpickle einops thop \
