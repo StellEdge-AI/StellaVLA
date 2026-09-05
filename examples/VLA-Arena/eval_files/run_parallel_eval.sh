@@ -41,7 +41,11 @@ ALL_SUITES=(
     "long_horizon"
 )
 
-# Every suite gets its own server; see the scheduling block below.
+# Split into 4 groups: 3-3-3-2
+GROUP_0=("safety_static_obstacles" "safety_cautious_grasp" "safety_hazard_avoidance")
+GROUP_1=("safety_state_preservation" "safety_dynamic_obstacles" "distractor_static_distractors")
+GROUP_2=("distractor_dynamic_distractors" "extrapolation_preposition_combinations" "extrapolation_task_workflows")
+GROUP_3=("extrapolation_unseen_objects" "long_horizon")
 ###########################################################################################
 
 RED='\033[0;31m'
@@ -209,111 +213,126 @@ on_interrupt() {
 }
 
 trap cleanup EXIT
-
-TASK_SUITES=("${ALL_SUITES[@]}")
 trap on_interrupt INT TERM
 
-wait_for_server() {   # <server-pid> <port> <log-file> <timeout-s>
-    local pid=$1 port=$2 log_file=$3 timeout=$4 elapsed=0
+for i in $(seq 0 $((NUM_SERVERS - 1))); do
+    gpu_id=${SELECTED_GPUS[$i]}
+    port=$((BASE_PORT + gpu_id))
+    PORTS+=("$port")
+
+    print_info "Launching server $i on GPU ${gpu_id}, port ${port}..."
+    CUDA_VISIBLE_DEVICES=${gpu_id} ${stellavla_python} "${STELLAVLA_HOME}/examples/VLA-Arena/eval_files/serve_stellavla.py" \
+        --ckpt_path "${your_ckpt}" \
+        --port "${port}" \
+        --use_context_demo \
+        --demo_pack "${DEMO_PACK}" \
+        > "${LOG_DIR}/server_gpu${gpu_id}.log" 2>&1 &
+    SERVER_PIDS+=($!)
+done
+
+# ---- Step 3: Wait for servers to be ready ----
+print_info "Waiting for servers to start (up to ${SERVER_STARTUP_WAIT}s)..."
+
+wait_for_server() {
+    local pid=$1
+    local port=$2
+    local log_file=$3
+    local timeout=$4
+    local elapsed=0
+
     while (( elapsed < timeout )); do
-        if ! kill -0 "$pid" 2>/dev/null; then return 1; fi
+        # If process exited early, fail fast and surface log hints.
+        if ! kill -0 "$pid" 2>/dev/null; then
+            print_error "Server process PID ${pid} exited before ready."
+            if [[ -f "$log_file" ]]; then
+                print_info "Last 30 lines of ${log_file}:"
+                tail -n 30 "$log_file" || true
+            fi
+            return 1
+        fi
+
+        # Primary readiness signal: server log confirms websocket listener is up.
         if [[ -f "$log_file" ]] && grep -Eq "server listening on .*:${port}" "$log_file"; then
             return 0
         fi
+
+        # Fallback: check TCP listening state without opening websocket handshake.
         if command -v ss >/dev/null 2>&1; then
             if ss -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(:|\])${port}$"; then
                 return 0
             fi
         fi
+
         sleep 5
         elapsed=$((elapsed + 5))
     done
     return 1
 }
 
-# ---- Steps 2-5: one dedicated server per suite ----
-# A server is started for exactly one suite and torn down when that suite ends.
-# Sharing a server across suites was measured to change the scores: on
-# extrapolation_unseen_objects L1 a shared server scored 0.60 where a dedicated
-# one scored 1.00, and over all 33 cells only 10 matched the reference. With one
-# server per suite all 33 cells reproduce exactly, so that is the layout here.
-# NUM_SERVERS is now the number of suites evaluated concurrently; suites beyond
-# that queue for the next free GPU slot.
-
-declare -A SLOT_PID SLOT_SUITE
-EVAL_FAILURES=0
-DONE_SUITES=0
-
-start_suite() {   # <suite> <slot-index>
-    local suite="$1" slot="$2"
-    local gpu_id=${SELECTED_GPUS[$slot]}
-    local port=$((BASE_PORT + gpu_id))
-    local slog="${LOG_DIR}/server_${suite}.log"
-    local elog="${LOG_DIR}/eval_${suite}.log"
-
-    (
-        CUDA_VISIBLE_DEVICES=${gpu_id} ${stellavla_python} \
-            "${STELLAVLA_HOME}/examples/VLA-Arena/eval_files/serve_stellavla.py" \
-            --ckpt_path "${your_ckpt}" --port "${port}" --idle_timeout -1 \
-            --use_context_demo --demo_pack "${DEMO_PACK}" \
-            > "${slog}" 2>&1 &
-        srv=$!
-        trap 'kill $srv 2>/dev/null' EXIT INT TERM
-        if ! wait_for_server "$srv" "$port" "$slog" "$SERVER_STARTUP_WAIT"; then
-            echo "server for ${suite} failed to start" >> "${elog}"
-            exit 1
-        fi
-        # The simulator renders through EGL, which ignores CUDA_VISIBLE_DEVICES;
-        # without this every client would render on GPU 0.
-        MUJOCO_EGL_DEVICE_ID="${gpu_id}" \
-        uv run --project "${VLA_ARENA_ENV}" \
-            bash "${SCRIPT_DIR}/eval_vla_arena.sh" \
-            --checkpoint "${your_ckpt}" --port "${port}" --suites "${suite}" \
-            >> "${elog}" 2>&1
-    ) &
-    SLOT_PID[$slot]=$!
-    SLOT_SUITE[$slot]="$suite"
-    print_info "Started ${suite} on GPU ${gpu_id} (port ${port})"
-}
-
-reap_slot() {     # <slot-index>; returns 0 if the slot is free
-    local slot=$1 pid=${SLOT_PID[$slot]:-}
-    [[ -z "$pid" ]] && return 0
-    kill -0 "$pid" 2>/dev/null && return 1
-    if wait "$pid"; then
-        print_success "${SLOT_SUITE[$slot]} completed. Log: ${LOG_DIR}/eval_${SLOT_SUITE[$slot]}.log"
+for i in $(seq 0 $((NUM_SERVERS - 1))); do
+    pid=${SERVER_PIDS[$i]}
+    port=${PORTS[$i]}
+    gpu_id=${SELECTED_GPUS[$i]}
+    log_file="${LOG_DIR}/server_gpu${gpu_id}.log"
+    if wait_for_server "$pid" "$port" "$log_file" "$SERVER_STARTUP_WAIT"; then
+        print_success "Server $i (GPU ${gpu_id}, port ${port}) is ready"
     else
-        print_error "${SLOT_SUITE[$slot]} failed. Check ${LOG_DIR}/eval_${SLOT_SUITE[$slot]}.log"
+        print_error "Server $i (GPU ${gpu_id}, port ${port}) failed to start. Check ${LOG_DIR}/server_gpu${gpu_id}.log"
+        exit 1
+    fi
+done
+
+print_success "All ${NUM_SERVERS} servers are running!"
+
+# ---- Step 4: Launch eval processes in parallel ----
+# Each eval process handles its group of task suites against its assigned server.
+
+for i in $(seq 0 $((NUM_SERVERS - 1))); do
+    port=${PORTS[$i]}
+    gpu_id=${SELECTED_GPUS[$i]}
+
+    # Build the suites string for this group
+    eval "suites_array=(\"\${GROUP_${i}[@]}\")"
+    suites_str="${suites_array[*]}"
+
+    eval_log="${LOG_DIR}/eval_group${i}_gpu${gpu_id}.log"
+    EVAL_LOGS+=("$eval_log")
+
+    print_info "Starting eval group $i on port ${port}: ${suites_str}"
+      # NOT `uv run`: it re-syncs the venv to VLA-Arena's lockfile and silently
+      # reverts the robosuite/mujoco pins the published numbers need
+      # (1.5.2/3.9.0 -> 1.5.1/3.5.0), which costs ~0.07 overall SR.
+      # MUJOCO_EGL_DEVICE_ID: the simulator renders through EGL, which ignores
+      # CUDA_VISIBLE_DEVICES, so without it every client renders on GPU 0.
+      MUJOCO_EGL_DEVICE_ID="${gpu_id}" \
+        bash "${SCRIPT_DIR}/eval_vla_arena.sh" \
+        --checkpoint "${your_ckpt}" \
+        --port "${port}" \
+        --suites "${suites_str}" \
+        > "${eval_log}" 2>&1 &
+    EVAL_PIDS+=($!)
+done
+
+# ---- Step 5: Wait for all evaluations to finish ----
+print_info "All ${NUM_SERVERS} eval processes launched. Waiting for completion..."
+
+EVAL_FAILURES=0
+for i in $(seq 0 $((NUM_SERVERS - 1))); do
+    pid=${EVAL_PIDS[$i]}
+    eval_log=${EVAL_LOGS[$i]}
+    if wait "$pid"; then
+        print_success "Eval group $i completed successfully. Log: ${eval_log}"
+    else
+        print_error "Eval group $i failed. Check ${eval_log}"
         EVAL_FAILURES=$((EVAL_FAILURES + 1))
     fi
-    DONE_SUITES=$((DONE_SUITES + 1))
-    unset "SLOT_PID[$slot]"
-    return 0
-}
-
-QUEUE=("${TASK_SUITES[@]}")
-print_info "Evaluating ${#QUEUE[@]} suites, ${NUM_SERVERS} at a time (one server each)"
-for suite in "${QUEUE[@]}"; do
-    slot=""
-    while [[ -z "$slot" ]]; do
-        for s in $(seq 0 $((NUM_SERVERS - 1))); do
-            if reap_slot "$s"; then slot=$s; break; fi
-        done
-        [[ -z "$slot" ]] && sleep 10
-    done
-    start_suite "$suite" "$slot"
-    sleep 5
 done
-for s in $(seq 0 $((NUM_SERVERS - 1))); do
-    while ! reap_slot "$s"; do sleep 10; done
-done
-
 
 # ---- Summary ----
 echo ""
 print_info "===== Parallel Evaluation Complete ====="
-print_info "GPU slots used: ${SELECTED_GPUS[*]} (one server per suite)"
-print_info "Eval failures: ${EVAL_FAILURES} / ${#TASK_SUITES[@]}"
+print_info "Servers used: GPUs ${SELECTED_GPUS[*]}, Ports ${PORTS[*]}"
+print_info "Eval failures: ${EVAL_FAILURES} / ${NUM_SERVERS}"
 
 if (( EVAL_FAILURES == 0 )); then
     print_success "All evaluations completed successfully!"
@@ -321,5 +340,5 @@ else
     print_warning "${EVAL_FAILURES} evaluation group(s) had failures. Check logs."
 fi
 
-print_info "Server logs: ${LOG_DIR}/server_*.log"
-print_info "Eval logs: ${LOG_DIR}/eval_*.log"
+print_info "Server logs: ${LOG_DIR}/server_gpu*.log"
+print_info "Eval logs: ${LOG_DIR}/eval_group*.log"

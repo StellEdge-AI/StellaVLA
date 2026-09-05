@@ -231,6 +231,7 @@ RUN /opt/conda/envs/stellavla/bin/pip install --no-deps -e /workspace \
 ENV STELLAVLA_PY=/opt/conda/envs/stellavla/bin/python \
     LIBERO_PY=/opt/conda/envs/libero/bin/python \
     LIBERO_PLUS_PY=/opt/conda/envs/libero_plus/bin/python \
+    UV_NO_SYNC=1 \
     VLA_ARENA_python=/app/VLA-Arena/envs/base/.venv/bin/python \
     VLA_ARENA_ENV=/app/VLA-Arena/envs/base \
     STELLAVLA_HOME=/workspace \
